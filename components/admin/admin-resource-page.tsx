@@ -11,8 +11,15 @@ import {
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 
 type ItemRecord = Record<string, unknown> & { id: string };
+type HierarchyItem = { item: ItemRecord; depth: number };
 
-function readValue(item: ItemRecord, field: AdminField) {
+const PROTECTED_PAGES = new Set(["store"]);
+
+function readValue(
+  item: ItemRecord,
+  field: AdminField,
+  relations: Record<string, Array<{ value: string; label: string }>>,
+) {
   const value = item[field.key];
   if (field.type === "boolean") {
     return value ? (
@@ -24,6 +31,11 @@ function readValue(item: ItemRecord, field: AdminField) {
         Hidden
       </span>
     );
+  }
+  if (field.type === "select") {
+    const options = relations[field.key] ?? [];
+    const matched = options.find((opt) => opt.value === String(value ?? ""));
+    return matched?.label ?? String(value ?? "");
   }
   if (field.type === "date" && value) {
     return new Date(String(value)).toLocaleDateString();
@@ -51,6 +63,69 @@ function isImageField(field: AdminField) {
   return key.includes("image") || label.includes("image");
 }
 
+function buildHierarchy(items: ItemRecord[]): HierarchyItem[] {
+  const nodes = new Map<string, { item: ItemRecord; children: string[] }>();
+  for (const item of items) {
+    nodes.set(item.id, { item, children: [] });
+  }
+  const roots: string[] = [];
+  for (const item of items) {
+    const parentId = item.parentId ? String(item.parentId) : "";
+    if (parentId && nodes.has(parentId)) {
+      nodes.get(parentId)?.children.push(item.id);
+    } else {
+      roots.push(item.id);
+    }
+  }
+
+  const sortIds = (ids: string[]) =>
+    ids.sort((a, b) => {
+      const aItem = nodes.get(a)?.item;
+      const bItem = nodes.get(b)?.item;
+      const aOrder = Number(aItem?.orderIndex ?? 0);
+      const bOrder = Number(bItem?.orderIndex ?? 0);
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      const aTitle = String(aItem?.title ?? "");
+      const bTitle = String(bItem?.title ?? "");
+      return aTitle.localeCompare(bTitle);
+    });
+
+  for (const node of nodes.values()) {
+    node.children = sortIds(node.children);
+  }
+  const sortedRoots = sortIds(roots);
+
+  const flat: HierarchyItem[] = [];
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+
+  const walk = (id: string, depth: number) => {
+    if (visiting.has(id) || visited.has(id)) {
+      return;
+    }
+    visiting.add(id);
+    const node = nodes.get(id);
+    if (!node) {
+      visiting.delete(id);
+      return;
+    }
+    flat.push({ item: node.item, depth });
+    for (const childId of node.children) {
+      walk(childId, depth + 1);
+    }
+    visiting.delete(id);
+    visited.add(id);
+  };
+
+  for (const rootId of sortedRoots) {
+    walk(rootId, 0);
+  }
+
+  return flat;
+}
+
 export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey }) {
   const config: AdminResource = ADMIN_RESOURCES[resourceKey];
   const [items, setItems] = useState<ItemRecord[]>([]);
@@ -61,10 +136,27 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
   const [relations, setRelations] = useState<Record<string, Array<{ value: string; label: string }>>>({});
   const editorSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const listFields = useMemo(
-    () => config.fields.filter((field: AdminField) => field.list).slice(0, 6),
+  const listFields = useMemo(() => {
+    const base = config.fields.filter((field: AdminField) => field.list);
+    if (resourceKey === "pages-structure") {
+      return base
+        .filter((field) => field.key !== "parentId" && field.key !== "orderIndex" && field.key !== "visible")
+        .slice(0, 6);
+    }
+    return base.slice(0, 6);
+  }, [config.fields, resourceKey]);
+
+  const visibleField = useMemo(
+    () => config.fields.find((field) => field.key === "visible" && field.type === "boolean"),
     [config.fields],
   );
+
+  const displayItems = useMemo(() => {
+    if (resourceKey !== "pages-structure") {
+      return items.map((item) => ({ item, depth: 0 }));
+    }
+    return buildHierarchy(items);
+  }, [items, resourceKey]);
 
   async function load() {
     const res = await fetch(`/api/admin/${resourceKey}`);
@@ -127,6 +219,14 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
   }
 
   async function onDelete(id: string) {
+    if (resourceKey === "pages-structure") {
+      const item = items.find((entry) => entry.id === id);
+      const slug = String(item?.slug ?? "").replace(/^\//, "");
+      if (PROTECTED_PAGES.has(slug)) {
+        window.alert("This page is protected and cannot be deleted.");
+        return;
+      }
+    }
     if (!window.confirm("Delete this item?")) {
       return;
     }
@@ -206,19 +306,25 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">#</th>
                   {listFields.map((field) => (
                     <th key={field.key} className="px-4 py-3">
                       {field.label}
                     </th>
                   ))}
+                  {resourceKey === "pages-structure" && visibleField ? (
+                    <th className="px-4 py-3">Visible</th>
+                  ) : null}
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, index) => (
+                {displayItems.map(({ item, depth }) => {
+                  const prefix =
+                    resourceKey === "pages-structure" && depth > 0
+                      ? `${"|  ".repeat(Math.max(0, depth - 1))}+- `
+                      : "";
+                  return (
                   <tr key={item.id} className="border-t">
-                    <td className="px-4 py-3 text-slate-600">{index + 1}</td>
                     {listFields.map((field) => (
                       <td key={field.key} className="px-4 py-3 text-slate-700">
                         {field.type === "boolean" ? (
@@ -233,11 +339,35 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                           >
                             {item[field.key] ? "Visible" : "Hidden"}
                           </button>
+                        ) : field.key === "title" && resourceKey === "pages-structure" ? (
+                          <div className="flex items-center">
+                            <span className="inline-flex items-center font-medium text-slate-800">
+                              {prefix ? (
+                                <span className="mr-2 font-mono text-xs text-slate-400">{prefix}</span>
+                              ) : null}
+                              <span style={{ paddingLeft: depth * 18 }}>{readValue(item, field, relations)}</span>
+                            </span>
+                          </div>
                         ) : (
-                          readValue(item, field)
+                          readValue(item, field, relations)
                         )}
                       </td>
                     ))}
+                    {resourceKey === "pages-structure" && visibleField ? (
+                      <td className="px-4 py-3 text-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => onQuickToggle(item, visibleField)}
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium transition ${
+                            item[visibleField.key]
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                          }`}
+                        >
+                          {item[visibleField.key] ? "Visible" : "Hidden"}
+                        </button>
+                      </td>
+                    ) : null}
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button
@@ -247,6 +377,8 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                         >
                           Edit
                         </button>
+                      {resourceKey === "pages-structure" &&
+                      PROTECTED_PAGES.has(String(item.slug ?? "").replace(/^\//, "")) ? null : (
                         <button
                           className="inline-flex rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
                           onClick={() => onDelete(item.id)}
@@ -254,10 +386,12 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                         >
                           Delete
                         </button>
+                      )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>

@@ -125,6 +125,23 @@ model Product {
   price       Decimal?  @db.Decimal(10, 2)
   listPrice   Decimal?  @db.Decimal(10, 2)
   imageUrl    String?
+  boxContents String?
+  collection  String?
+  dimensions  String?
+  finish      String?
+  impactIsolationClass String?
+  installation String?
+  lockingSystem String?
+  printedDesign String?
+  soundTransmission String?
+  species     String?
+  wearLayer   String?
+  accessoryNosing String?
+  accessoryReducer String?
+  accessoryTmold String?
+  referenceInstallationUrl String?
+  referenceSpecSheetUrl String?
+  referenceWarrantyUrl String?
   technicalData String?
   description String?
   visible     Boolean   @default(true)

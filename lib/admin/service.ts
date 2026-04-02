@@ -2,6 +2,8 @@ import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ADMIN_RESOURCES, type AdminResource, type ResourceKey } from "@/lib/admin/resources";
 
+const PROTECTED_PAGE_SLUGS = new Set(["store"]);
+
 type Primitive = string | number | boolean | null;
 
 type QueryRecord = Record<string, Primitive>;
@@ -47,7 +49,14 @@ function normalizeValue(type: string, value: unknown): Primitive {
   return String(value);
 }
 
-function buildData(resource: ResourceKey, input: QueryRecord) {
+function relationFieldKey(fieldKey: string) {
+  if (fieldKey.endsWith("Id") && fieldKey.length > 2) {
+    return fieldKey.slice(0, -2);
+  }
+  return fieldKey;
+}
+
+function buildData(resource: ResourceKey, input: QueryRecord, mode: "create" | "update") {
   const config = ADMIN_RESOURCES[resource];
   const data: Record<string, unknown> = {};
   for (const field of config.fields) {
@@ -63,6 +72,17 @@ function buildData(resource: ResourceKey, input: QueryRecord) {
       continue;
     }
     const value = normalizeValue(field.type, raw);
+    if (field.relationResource) {
+      const relationKey = relationFieldKey(field.key);
+      if (value === null) {
+        if (mode === "update") {
+          data[relationKey] = { disconnect: true };
+        }
+        continue;
+      }
+      data[relationKey] = { connect: { id: value } };
+      continue;
+    }
     data[field.key] = value;
   }
   return data;
@@ -111,7 +131,7 @@ export async function createResource(resource: ResourceKey, input: QueryRecord) 
   if (!model) {
     return null;
   }
-  const data = buildData(resource, input);
+  const data = buildData(resource, input, "create");
   return model.create({ data });
 }
 
@@ -121,7 +141,7 @@ export async function updateResource(resource: ResourceKey, id: string, input: Q
   if (!model) {
     return null;
   }
-  const data = buildData(resource, input);
+  const data = buildData(resource, input, "update");
   return model.update({ where: { id }, data });
 }
 
@@ -130,6 +150,16 @@ export async function deleteResource(resource: ResourceKey, id: string) {
   const model = prismaClient[config.model];
   if (!model) {
     return null;
+  }
+  if (resource === "pages-structure") {
+    const page = await prisma.pageStructure.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+    const slug = page?.slug?.replace(/^\//, "") ?? "";
+    if (PROTECTED_PAGE_SLUGS.has(slug)) {
+      return null;
+    }
   }
   return model.delete({ where: { id } });
 }

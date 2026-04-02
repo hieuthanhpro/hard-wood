@@ -62,6 +62,9 @@ export async function DELETE(
   if (!config) {
     return NextResponse.json({ error: "Unknown resource" }, { status: 404 });
   }
-  await deleteResource(resource as ResourceKey, params.id);
-  return NextResponse.json({ ok: true });
+  const deleted = await deleteResource(resource as ResourceKey, params.id);
+  if (!deleted) {
+    return NextResponse.json({ error: "Protected or not found" }, { status: 400 });
+  }
+  return NextResponse.json({ ok: true, item: deleted });
 }
