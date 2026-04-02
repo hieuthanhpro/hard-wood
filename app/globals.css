@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --brand-orange: #ff7920;
+  --brand-warm-brown: #6b4a2e;
 }
 
 @theme inline {
@@ -10,6 +12,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-warm-brown: var(--brand-warm-brown);
 }
 
 @media (prefers-color-scheme: dark) {
