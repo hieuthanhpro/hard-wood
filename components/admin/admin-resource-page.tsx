@@ -223,7 +223,15 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
   async function onSubmit() {
     const url = `/api/admin/${resourceKey}`;
     const method = "POST";
-    const payload = currentId ? { ...form, id: currentId } : form;
+    const payload: Record<string, string | number | boolean | string[]> = currentId
+      ? { ...form, id: currentId }
+      : { ...form };
+    if (resourceKey === "products") {
+      const gallery = payload.imageUrls;
+      if (Array.isArray(gallery) && gallery.length > 0) {
+        payload.imageUrl = gallery[0];
+      }
+    }
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
