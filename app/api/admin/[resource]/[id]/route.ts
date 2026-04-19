@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminSession } from "@/lib/auth";
@@ -45,6 +46,7 @@ export async function PATCH(
   }
   const body = (await req.json()) as Record<string, string | number | boolean | null>;
   const item = await updateResource(resource as ResourceKey, params.id, body);
+  revalidatePath("/", "layout");
   return NextResponse.json({ item });
 }
 
@@ -62,9 +64,13 @@ export async function DELETE(
   if (!config) {
     return NextResponse.json({ error: "Unknown resource" }, { status: 404 });
   }
+  if (resource === "home-blocks") {
+    return NextResponse.json({ error: "Home blocks are fixed and cannot be deleted." }, { status: 400 });
+  }
   const deleted = await deleteResource(resource as ResourceKey, params.id);
   if (!deleted) {
     return NextResponse.json({ error: "Protected or not found" }, { status: 400 });
   }
+  revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, item: deleted });
 }

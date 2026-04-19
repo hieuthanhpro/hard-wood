@@ -17,6 +17,10 @@ type AdminFieldControlProps = {
   setForm: Dispatch<SetStateAction<Record<string, string | number | boolean | string[]>>>;
   uploadImage: (file: File) => Promise<string | null>;
   selectPlaceholder?: string;
+  imagePreviewFrameClassName?: string;
+  imagePreviewHint?: string;
+  imageObjectPosition?: string;
+  onImageObjectPositionChange?: (nextValue: string) => void;
 };
 
 export function AdminFieldControl({
@@ -26,6 +30,10 @@ export function AdminFieldControl({
   setForm,
   uploadImage,
   selectPlaceholder,
+  imagePreviewFrameClassName,
+  imagePreviewHint,
+  imageObjectPosition,
+  onImageObjectPositionChange,
 }: AdminFieldControlProps) {
   if (field.type === "textarea") {
     return (
@@ -78,6 +86,12 @@ export function AdminFieldControl({
   if (field.type === "text" && isImageField(field)) {
     const previewSrc = String(value ?? "").trim();
     const showPreview = previewSrc.length > 0;
+    const [rawX = "50", rawY = "50"] = String(imageObjectPosition ?? "50% 50%")
+      .replaceAll("%", "")
+      .split(/\s+/);
+    const posX = Number.isFinite(Number(rawX)) ? Math.min(100, Math.max(0, Number(rawX))) : 50;
+    const posY = Number.isFinite(Number(rawY)) ? Math.min(100, Math.max(0, Number(rawY))) : 50;
+    const objectPosition = `${posX}% ${posY}%`;
 
     return (
       <div className="space-y-2">
@@ -130,11 +144,45 @@ export function AdminFieldControl({
           ) : null}
         </div>
         {showPreview ? (
-          <div className="flex items-center gap-3">
-            <div className="h-16 w-16 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-              <img src={previewSrc} alt="" className="h-full w-full object-cover" />
+          <div className="space-y-2">
+            <div
+              className={`w-full max-w-sm overflow-hidden rounded-md border border-slate-200 bg-slate-50 ${imagePreviewFrameClassName ?? "h-16 w-16"}`}
+            >
+              <img src={previewSrc} alt="" className="h-full w-full object-cover" style={{ objectPosition }} />
             </div>
-            <span className="text-xs text-slate-500">Image preview</span>
+            <span className="text-xs text-slate-500">{imagePreviewHint ?? "Image preview"}</span>
+            {onImageObjectPositionChange ? (
+              <div className="max-w-sm space-y-2 rounded-md border border-slate-200 bg-white p-3">
+                <div className="text-xs font-medium text-slate-700">Image alignment</div>
+                <label className="block text-xs text-slate-600">
+                  Horizontal ({Math.round(posX)}%)
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={posX}
+                    onChange={(event) =>
+                      onImageObjectPositionChange(`${event.currentTarget.value}% ${Math.round(posY)}%`)
+                    }
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <label className="block text-xs text-slate-600">
+                  Vertical ({Math.round(posY)}%)
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={posY}
+                    onChange={(event) =>
+                      onImageObjectPositionChange(`${Math.round(posX)}% ${event.currentTarget.value}%`)
+                    }
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <div className="text-[11px] text-slate-500">Saved as: {objectPosition}</div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

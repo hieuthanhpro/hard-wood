@@ -1,139 +1,97 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
+import type { HomeBlockContent } from "@/lib/home-blocks-types";
+import { Calendar } from "lucide-react";
 
-export function FreeConsultationSection() {
+interface FieldProps {
+  label: string;
+  type: string;
+  name: string;
+  placeholder: string;
+  required?: boolean;
+  icon?: ReactNode;
+}
+
+export function FreeConsultationSection({ block }: { block?: HomeBlockContent }) {
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
   }
 
-  const inputClass =
-    "w-full min-w-0 border border-gray-300 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
+  const header = block?.header ?? "BOOK YOUR SHOWROOM VISIT";
+  const ctaLabel = block?.ctaLabel ?? "Send";
+
+  const Field = ({ label, type, name, placeholder, required = true, icon }: FieldProps) => (
+    <div className="flex flex-col gap-2">
+      <label className="text-[13px] font-bold text-gray-800">{label}</label>
+      <div className="relative flex items-center">
+        <input
+          name={name}
+          type={type}
+          required={required}
+          placeholder={placeholder}
+          className="w-full rounded-md border border-gray-200 bg-[#fcfcfc] px-4 py-3.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#ff6b00] focus:outline-none focus:ring-1 focus:ring-[#ff6b00]"
+        />
+        {icon && (
+          <div className="pointer-events-none absolute right-4 text-gray-800">
+            {icon}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <section className="w-full min-w-0 bg-white py-14 lg:py-20">
-      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-center text-xl font-bold text-black sm:text-2xl">Free Consultation Request</h2>
+    <section className="w-full min-w-0 bg-[#514E26] py-16 lg:py-24">
+      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6">
+        <div className="mb-10 text-center">
+          <h2 className="font-['Be_Vietnam'] text-2xl font-bold uppercase tracking-wide text-white sm:text-3xl lg:text-[34px]">
+            {header}
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl font-['Abramo'] text-[15px] leading-relaxed text-white/90 sm:text-[17px]">
+            Fill out the form below and our team will get back to you quickly.<br className="hidden sm:block" />
+            It only takes 30 seconds.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-10 flex w-full min-w-0 flex-col gap-3 sm:gap-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <input
-              name="firstName"
-              type="text"
-              required
-              autoComplete="given-name"
-              placeholder="*First name:"
-              className={inputClass}
-              aria-label="First name (required)"
+        <div className="rounded-xl bg-white p-6 shadow-2xl sm:p-10">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <Field 
+              label="Full Name" 
+              name="fullName" 
+              type="text" 
+              placeholder="John Doe" 
             />
-            <input
-              name="lastName"
-              type="text"
-              autoComplete="family-name"
-              placeholder="Last name:"
-              className={inputClass}
-              aria-label="Last name"
+            <Field 
+              label="Email Address" 
+              name="email" 
+              type="email" 
+              placeholder="john@example.com" 
             />
-          </div>
+            <Field 
+              label="Phone Number" 
+              name="phone" 
+              type="tel" 
+              placeholder="+1 (555) 000-0000" 
+            />
+            <Field 
+              label="Preferred Visit Date (optional)" 
+              name="preferredDate" 
+              type="date" 
+              placeholder="" 
+              required={false}
+            />
 
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="*Email:"
-            className={inputClass}
-            aria-label="Email (required)"
-          />
-
-          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:gap-4">
-            <input
-              name="phone"
-              type="tel"
-              required
-              autoComplete="tel"
-              placeholder="*Phone:"
-              className={`${inputClass} sm:max-w-[220px] sm:shrink-0 lg:max-w-[240px]`}
-              aria-label="Phone (required)"
-            />
-            <input
-              name="address"
-              type="text"
-              required
-              autoComplete="street-address"
-              placeholder="*Address:"
-              className={`${inputClass} min-w-0 flex-1`}
-              aria-label="Address (required)"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <input
-              name="city"
-              type="text"
-              required
-              autoComplete="address-level2"
-              placeholder="*City:"
-              className={inputClass}
-              aria-label="City (required)"
-            />
-            <input
-              name="province"
-              type="text"
-              autoComplete="address-level1"
-              placeholder="Province:"
-              className={inputClass}
-              aria-label="Province"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <input
-              name="preferredDate"
-              type="text"
-              required
-              placeholder="*Preferred date:"
-              className={inputClass}
-              aria-label="Preferred date (required)"
-            />
-            <input
-              name="preferredTime"
-              type="text"
-              required
-              placeholder="*Preferred time:"
-              className={inputClass}
-              aria-label="Preferred time (required)"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <input
-              name="buildingType"
-              type="text"
-              required
-              placeholder="*Building Type:"
-              className={inputClass}
-              aria-label="Building type (required)"
-            />
-            <input
-              name="flooringType"
-              type="text"
-              required
-              placeholder="*Flooring type:"
-              className={inputClass}
-              aria-label="Flooring type (required)"
-            />
-          </div>
-
-          <div className="flex justify-center pt-4">
-            <button
-              type="submit"
-              className="min-w-[140px] rounded-md bg-[#8B7E6C] px-10 py-3 text-sm font-bold text-white shadow-sm transition hover:brightness-95"
-            >
-              Send
-            </button>
-          </div>
-        </form>
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="w-full rounded-md bg-[#ff6b00] py-4 text-[16px] font-semibold tracking-wide text-white shadow-md transition hover:brightness-95"
+              >
+                {ctaLabel}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
   );

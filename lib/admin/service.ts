@@ -1,6 +1,7 @@
 import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ADMIN_RESOURCES, type AdminResource, type ResourceKey } from "@/lib/admin/resources";
+import { DEFAULT_HOME_BLOCKS, getHomeBlocks } from "@/lib/home-blocks";
 
 const PROTECTED_PAGE_SLUGS = new Set(["store"]);
 
@@ -83,6 +84,9 @@ function buildData(resource: ResourceKey, input: QueryRecord, mode: "create" | "
   const config = ADMIN_RESOURCES[resource];
   const data: Record<string, unknown> = {};
   for (const field of config.fields) {
+    if (mode === "update" && field.editable === false) {
+      continue;
+    }
     const raw = input[field.key];
     if (raw === undefined) {
       continue;
@@ -112,6 +116,9 @@ function buildData(resource: ResourceKey, input: QueryRecord, mode: "create" | "
 }
 
 export async function listResource(resource: ResourceKey, query: URLSearchParams) {
+  if (resource === "home-blocks") {
+    return getHomeBlocks();
+  }
   const config: AdminResource = ADMIN_RESOURCES[resource];
   const model = prismaClient[config.model];
   if (!model) {
@@ -158,6 +165,31 @@ export async function createResource(resource: ResourceKey, input: QueryRecord) 
   return model.create({ data });
 }
 
+function upsertHomeBlockByCallbackKey(callbackKey: string, data: Record<string, unknown>) {
+  const defaults = DEFAULT_HOME_BLOCKS.find((b) => b.callbackKey === callbackKey);
+  const base = {
+    callbackKey,
+    header: defaults?.header ?? "",
+    subheader: defaults?.subheader ?? null,
+    content: defaults?.content ?? null,
+    imageUrl: defaults?.imageUrl ?? null,
+    imageObjectPosition: defaults?.imageObjectPosition ?? null,
+    ctaLabel: defaults?.ctaLabel ?? null,
+    ctaHref: defaults?.ctaHref ?? null,
+    orderIndex: defaults?.orderIndex ?? 0,
+    visible: defaults?.visible ?? true,
+  };
+  const merged = { ...base, ...data };
+  return prisma.homeBlock.upsert({
+    where: { callbackKey },
+    update: data,
+    create: {
+      ...merged,
+      header: String(merged.header ?? ""),
+    },
+  });
+}
+
 export async function updateResource(resource: ResourceKey, id: string, input: QueryRecord) {
   const config: AdminResource = ADMIN_RESOURCES[resource];
   const model = prismaClient[config.model];
@@ -165,6 +197,16 @@ export async function updateResource(resource: ResourceKey, id: string, input: Q
     return null;
   }
   const data = buildData(resource, input, "update");
+  if (resource === "home-blocks") {
+    const callbackKey =
+      typeof input.callbackKey === "string" ? input.callbackKey.trim() : "";
+    if (callbackKey) {
+      if (data.header === null || data.header === undefined) {
+        data.header = "";
+      }
+      return upsertHomeBlockByCallbackKey(callbackKey, data);
+    }
+  }
   return model.update({ where: { id }, data });
 }
 

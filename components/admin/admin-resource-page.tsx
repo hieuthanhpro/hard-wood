@@ -28,6 +28,23 @@ type HierarchyItem = {
 
 const PROTECTED_PAGES = new Set(["store"]);
 
+const HOME_BLOCK_IMAGE_FRAME_MAP: Record<string, { frameClassName: string; hint: string }> = {
+  hero: { frameClassName: "aspect-[16/9]", hint: "Hero background frame (16:9)" },
+  "home-products": { frameClassName: "aspect-[3/4]", hint: "Products/Services/Gallery frame (3:4)" },
+  "home-services": { frameClassName: "aspect-[3/4]", hint: "Products/Services/Gallery frame (3:4)" },
+  "home-gallery": { frameClassName: "aspect-[3/4]", hint: "Products/Services/Gallery frame (3:4)" },
+  "supply-residential": { frameClassName: "aspect-[5/3]", hint: "Supply cards frame (5:3)" },
+  "supply-strata": { frameClassName: "aspect-[5/3]", hint: "Supply cards frame (5:3)" },
+  "supply-commercial": { frameClassName: "aspect-[5/3]", hint: "Supply cards frame (5:3)" },
+  "supply-construction": { frameClassName: "aspect-[5/3]", hint: "Supply cards frame (5:3)" },
+  "flooring-wise-row1": { frameClassName: "aspect-[11/9]", hint: "Flooring Wise row 1 frame (11:9)" },
+  "flooring-wise-row2": { frameClassName: "aspect-[11/9]", hint: "Flooring Wise row 2 frame (11:9)" },
+  "why-hardwoodliving-card": { frameClassName: "aspect-[4/3]", hint: "Why Hardwoodliving card frame (4:3)" },
+  "best-value-left": { frameClassName: "aspect-[460/445]", hint: "Products on Sale frame (~1.03:1)" },
+  "best-value-right": { frameClassName: "aspect-[460/445]", hint: "Best Value Products frame (~1.03:1)" },
+  "best-value-center": { frameClassName: "aspect-[1402/438]", hint: "Center banner frame (~3.2:1)" },
+};
+
 function defaultForm(fields: AdminField[]) {
   const data: Record<string, string | number | boolean | string[]> = {};
   for (const field of fields) {
@@ -47,13 +64,20 @@ function defaultForm(fields: AdminField[]) {
 export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey }) {
   const isHierarchyResource = resourceKey === "pages-structure" || resourceKey === "categories";
   const isProductResource = resourceKey === "products";
+  const isFixedResource = resourceKey === "home-blocks";
   const config: AdminResource = ADMIN_RESOURCES[resourceKey];
+  const formFields = useMemo(
+    () => config.fields.filter((field: AdminField) => field.editable !== false),
+    [config.fields],
+  );
   const [items, setItems] = useState<ItemRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
+  /** Sent on save so home-block updates can upsert when the DB row is missing or id is stale. */
+  const [editingCallbackKey, setEditingCallbackKey] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string | number | boolean | string[]>>(
-    defaultForm(config.fields),
+    defaultForm(formFields),
   );
   const [relations, setRelations] = useState<Record<string, Array<{ value: string; label: string }>>>({});
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
@@ -163,14 +187,18 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
   }, [open]);
 
   function onCreate() {
+    if (isFixedResource) {
+      return;
+    }
     setCurrentId(null);
-    setForm(defaultForm(config.fields));
+    setEditingCallbackKey(null);
+    setForm(defaultForm(formFields));
     setOpen(true);
   }
 
   function onEdit(item: ItemRecord) {
-    const next = defaultForm(config.fields);
-    for (const field of config.fields) {
+    const next = defaultForm(formFields);
+    for (const field of formFields) {
       if (field.type === "password") {
         next[field.key] = "";
         continue;
@@ -181,7 +209,15 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
       }
       next[field.key] = (item[field.key] as string | number | boolean) ?? next[field.key];
     }
-    setCurrentId(String(item.id));
+    if (resourceKey === "home-blocks" && item.callbackKey != null) {
+      next.callbackKey = String(item.callbackKey);
+    }
+    setEditingCallbackKey(
+      resourceKey === "home-blocks" && item.callbackKey != null && String(item.callbackKey).length > 0
+        ? String(item.callbackKey)
+        : null,
+    );
+    setCurrentId(item.id != null ? String(item.id) : null);
     setForm(next);
     setOpen(true);
   }
@@ -226,6 +262,9 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
     const payload: Record<string, string | number | boolean | string[]> = currentId
       ? { ...form, id: currentId }
       : { ...form };
+    if (resourceKey === "home-blocks" && editingCallbackKey) {
+      payload.callbackKey = editingCallbackKey;
+    }
     if (resourceKey === "products") {
       const gallery = payload.imageUrls;
       if (Array.isArray(gallery) && gallery.length > 0) {
@@ -243,6 +282,7 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
       return;
     }
     setOpen(false);
+    setEditingCallbackKey(null);
     setLoading(true);
     await load();
     setLoading(false);
@@ -368,12 +408,14 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{config.title}</h1>
           <p className="text-slate-500 text-sm mt-1">{config.subtitle}</p>
         </div>
-        <button 
-          onClick={onCreate}
-          className="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-lg"
-        >
-          + Add New
-        </button>
+        {isFixedResource ? null : (
+          <button 
+            onClick={onCreate}
+            className="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-lg"
+          >
+            + Add New
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -581,8 +623,11 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                   </td>
                 </tr>
               ) : (
-                items.map((item) => (
-                  <tr key={item.id} className="border-t">
+                items.map((item, rowIndex) => (
+                  <tr
+                    key={String(item.id ?? item.callbackKey ?? item.slug ?? `row-${rowIndex}`)}
+                    className="border-t"
+                  >
                     {listFields.map((field) => (
                       <td key={field.key} className="px-4 py-3 text-slate-700">
                         {field.type === "boolean" ? (
@@ -611,13 +656,15 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                         >
                           Edit
                         </button>
-                        <button
-                          className="inline-flex rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                          onClick={() => onDelete(String(item.id))}
-                          type="button"
-                        >
-                          Delete
-                        </button>
+                        {isFixedResource ? null : (
+                          <button
+                            className="inline-flex rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                            onClick={() => onDelete(String(item.id))}
+                            type="button"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -637,7 +684,10 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
             </div>
             <button
               className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                setEditingCallbackKey(null);
+              }}
               type="button"
             >
               Close
@@ -654,9 +704,11 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
               />
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {config.fields.map((field) => {
+                {formFields.map((field) => {
                   const value = form[field.key];
                   const fieldColSpan = field.type === "textarea" ? "md:col-span-2 xl:col-span-3" : "";
+                  const callbackKey = String(form.callbackKey ?? "");
+                  const imageFrame = HOME_BLOCK_IMAGE_FRAME_MAP[callbackKey];
                   const selectOptions =
                     field.key === "parentId" && isHierarchyResource
                       ? hierarchyOptions.filter((opt) => {
@@ -679,6 +731,30 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
                         selectOptions={selectOptions}
                         setForm={setForm}
                         uploadImage={uploadImage}
+                        imagePreviewFrameClassName={
+                          resourceKey === "home-blocks" && field.key === "imageUrl"
+                            ? imageFrame?.frameClassName
+                            : undefined
+                        }
+                        imagePreviewHint={
+                          resourceKey === "home-blocks" && field.key === "imageUrl"
+                            ? imageFrame?.hint ?? "Image preview (default frame)"
+                            : undefined
+                        }
+                        imageObjectPosition={
+                          resourceKey === "home-blocks" && field.key === "imageUrl"
+                            ? String(form.imageObjectPosition ?? "50% 50%")
+                            : undefined
+                        }
+                        onImageObjectPositionChange={
+                          resourceKey === "home-blocks" && field.key === "imageUrl"
+                            ? (nextValue) =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  imageObjectPosition: nextValue,
+                                }))
+                            : undefined
+                        }
                       />
                     </div>
                   );
@@ -688,7 +764,10 @@ export function AdminResourcePage({ resourceKey }: { resourceKey: ResourceKey })
             <div className="flex items-center justify-between border-t pt-4">
               <button
                 className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  setEditingCallbackKey(null);
+                }}
                 type="button"
               >
                 Cancel

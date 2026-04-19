@@ -1,130 +1,150 @@
 import { Check } from "lucide-react";
+import type { HomeBlockContent } from "@/lib/home-blocks-types";
+import { splitLines, toObjectPosition } from "@/lib/home-blocks-utils";
 
 const AUDIENCE = [
-  "Home Owners",
-  "Designers",
-  "Builders",
-  "Contractors",
-  "Property Managers",
-  "Developers",
   "Restoration",
   "Renovators",
+  "Developers",
+  "Builders",
+  "Designers",
+  "Property Managers",
+  "Home Owners",
+  "Contractors",
 ] as const;
 
-const cardTitleClass =
-  "text-sm font-bold uppercase tracking-wide text-[#3d3420] sm:text-base";
+export function SupplyToFinishSection({
+  centerBlock,
+  leftTopBlock,
+  leftBottomBlock,
+  rightTopBlock,
+  rightBottomBlock,
+}: {
+  centerBlock?: HomeBlockContent;
+  leftTopBlock?: HomeBlockContent;
+  leftBottomBlock?: HomeBlockContent;
+  rightTopBlock?: HomeBlockContent;
+  rightBottomBlock?: HomeBlockContent;
+}) {
+  const audience = splitLines(centerBlock?.content);
+  const resolvedAudience = audience.length ? audience : [...AUDIENCE];
 
-export function SupplyToFinishSection() {
+  const leftTop = {
+    title: leftTopBlock?.header ?? "Residential",
+    image: leftTopBlock?.imageUrl ?? "/figma/supply-residential.png",
+    alt: leftTopBlock?.subheader ?? "Suburban home with lawn",
+    objectPosition: toObjectPosition(leftTopBlock?.imageObjectPosition),
+  };
+  const leftBottom = {
+    title: leftBottomBlock?.header ?? "Strata Buildings",
+    image: leftBottomBlock?.imageUrl ?? "/figma/supply-strata.png",
+    alt: leftBottomBlock?.subheader ?? "Modern strata apartment building",
+    objectPosition: toObjectPosition(leftBottomBlock?.imageObjectPosition),
+  };
+  const rightTop = {
+    title: rightTopBlock?.header ?? "Commercial",
+    image: rightTopBlock?.imageUrl ?? "/figma/supply-commercial.png",
+    alt: rightTopBlock?.subheader ?? "Modern office interior",
+    objectPosition: toObjectPosition(rightTopBlock?.imageObjectPosition),
+  };
+  const rightBottom = {
+    title: rightBottomBlock?.header ?? "New Construction",
+    image: rightBottomBlock?.imageUrl ?? "/figma/supply-construction.png",
+    alt: rightBottomBlock?.subheader ?? "Blueprints and planning for new construction",
+    objectPosition: toObjectPosition(rightBottomBlock?.imageObjectPosition),
+  };
+
+  const heading = centerBlock?.header ?? "Crafted for Every Sector";
+
   return (
     <section className="w-full min-w-0 bg-white py-14 lg:py-20">
-      <div className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Flex + flex-1: avoids grid col-span issues; each column gets ~1/3 width on lg */}
-        <div className="flex w-full min-w-0 flex-col gap-12 lg:flex-row lg:items-stretch lg:gap-8 xl:gap-10">
-          {/* Left column */}
-          <div className="flex min-w-0 w-full flex-1 flex-col gap-8 lg:basis-0">
-            <article className="w-full overflow-hidden rounded-lg bg-[#fdf9ee] shadow-sm ring-1 ring-black/5">
-              <div className="px-4 pt-4 sm:px-5 sm:pt-5">
-                <h3 className={cardTitleClass}>Residential</h3>
-              </div>
-              <div className="mt-3 px-4 pb-4 sm:px-5 sm:pb-5">
-                <div className="overflow-hidden rounded-md bg-neutral-200">
-                  <img
-                    src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=560&h=360&fit=crop&q=80"
-                    alt="Suburban home with lawn"
-                    className="aspect-[5/3] h-auto w-full max-w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </article>
+      <div className="mx-auto w-full min-w-0 max-w-[1402px] px-4 sm:px-9 lg:px-15">
+        {/* Heading */}
+        <h2 className="text-center text-[28px] font-bold uppercase leading-[1.1] tracking-[-0.01em] text-[#333] sm:text-[36px] lg:text-[42px] [font-family:var(--font-figma-league-spartan),ui-sans-serif,sans-serif]">
+          {heading}
+        </h2>
 
-            <article className="w-full overflow-hidden rounded-lg bg-[#efefef] shadow-sm ring-1 ring-black/5">
-              <div className="px-4 pt-4 sm:px-5 sm:pt-5">
-                <div className="overflow-hidden rounded-md bg-neutral-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=560&h=360&fit=crop&q=80"
-                    alt="Modern strata apartment building"
-                    className="aspect-[5/3] h-auto w-full max-w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-              <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                <h3 className={cardTitleClass}>Strata Buildings</h3>
-              </div>
-            </article>
+        {/* Audience tags row */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:gap-x-7">
+          {resolvedAudience.map((label) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3d3420] sm:text-xs"
+            >
+              <Check className="h-3.5 w-3.5 text-[#3d3420]" strokeWidth={2.5} aria-hidden />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        {/* 4-column grid: alternating label-cells and image-cells */}
+        <div className="mt-10 grid grid-cols-2 gap-0 lg:grid-cols-4">
+          {/* Row 1 */}
+          {/* Cell: RESIDENTIAL label */}
+          <div className="flex items-end bg-[#fdf9ee] p-5 sm:p-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#3d3420] sm:text-base [font-family:var(--font-figma-league-spartan),ui-sans-serif,sans-serif]">
+              {leftTop.title}
+            </h3>
+          </div>
+          {/* Cell: Office image */}
+          <div className="overflow-hidden bg-neutral-200">
+            <img
+              src={rightTop.image}
+              alt={rightTop.alt}
+              className="aspect-[4/3] h-full w-full object-cover"
+              style={{ objectPosition: rightTop.objectPosition }}
+              loading="lazy"
+            />
+          </div>
+          {/* Cell: COMMERCIAL label */}
+          <div className="flex items-end bg-[#fdf9ee] p-5 sm:p-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[#3d3420] sm:text-base [font-family:var(--font-figma-league-spartan),ui-sans-serif,sans-serif]">
+              {rightTop.title}
+            </h3>
+          </div>
+          {/* Cell: Blueprints image */}
+          <div className="overflow-hidden bg-neutral-200">
+            <img
+              src={rightBottom.image}
+              alt={rightBottom.alt}
+              className="aspect-[4/3] h-full w-full object-cover"
+              style={{ objectPosition: rightBottom.objectPosition }}
+              loading="lazy"
+            />
           </div>
 
-          {/* Middle column — vertically centered vs side stacks */}
-          <div className="flex min-w-0 w-full flex-1 flex-col items-center justify-center lg:basis-0 lg:px-1">
-            <div className="flex w-full max-w-md flex-col items-center sm:max-w-none">
-              <div className="flex items-start justify-center gap-3 sm:gap-4">
-                <div className="text-center">
-                  <p className="text-sm font-bold uppercase leading-snug tracking-wide text-[#3d3420] sm:text-base">
-                    Supply to
-                  </p>
-                  <p className="text-sm font-bold uppercase leading-snug tracking-wide text-[#3d3420] sm:text-base">
-                    Finish
-                  </p>
-                </div>
-                <Check
-                  className="mt-1 size-5 shrink-0 text-[#8B6914] sm:size-6"
-                  strokeWidth={2.5}
-                  aria-hidden
-                />
-              </div>
-
-              <ul className="mt-10 w-full space-y-3.5 px-1 sm:px-2">
-                {AUDIENCE.map((label) => (
-                  <li
-                    key={label}
-                    className="flex w-full min-w-0 items-center justify-between gap-4 text-sm text-[#3d3420] sm:text-base"
-                  >
-                    <span className="min-w-0 shrink leading-snug">{label}</span>
-                    <Check
-                      className="size-4 shrink-0 text-[#8B6914] sm:size-[18px]"
-                      strokeWidth={2.5}
-                      aria-hidden
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Row 2 */}
+          {/* Cell: House image */}
+          <div className="overflow-hidden bg-neutral-200">
+            <img
+              src={leftTop.image}
+              alt={leftTop.alt}
+              className="aspect-[4/3] h-full w-full object-cover"
+              style={{ objectPosition: leftTop.objectPosition }}
+              loading="lazy"
+            />
           </div>
-
-          {/* Right column */}
-          <div className="flex min-w-0 w-full flex-1 flex-col gap-8 lg:basis-0">
-            <article className="w-full overflow-hidden rounded-lg bg-[#fdf9ee] shadow-sm ring-1 ring-black/5">
-              <div className="px-4 pt-4 sm:px-5 sm:pt-5">
-                <h3 className={cardTitleClass}>Commercial</h3>
-              </div>
-              <div className="mt-3 px-4 pb-4 sm:px-5 sm:pb-5">
-                <div className="overflow-hidden rounded-md bg-neutral-200">
-                  <img
-                    src="https://images.unsplash.com/photo-1626187777040-ffb7cb2c5450?w=560&h=360&fit=crop&q=80"
-                    alt="Modern office interior"
-                    className="aspect-[5/3] h-auto w-full max-w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </article>
-
-            <article className="w-full overflow-hidden rounded-lg bg-[#efefef] shadow-sm ring-1 ring-black/5">
-              <div className="px-4 pt-4 sm:px-5 sm:pt-5">
-                <div className="overflow-hidden rounded-md bg-neutral-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=560&h=360&fit=crop&q=80"
-                    alt="Blueprints and planning for new construction"
-                    className="aspect-[5/3] h-auto w-full max-w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-              <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                <h3 className={cardTitleClass}>New Construction</h3>
-              </div>
-            </article>
+          {/* Cell: STRATA BUILDINGS label */}
+          <div className="flex items-start bg-[#efefef] p-5 pt-auto sm:p-6">
+            <h3 className="mt-auto text-sm font-bold uppercase tracking-wide text-[#3d3420] sm:text-base [font-family:var(--font-figma-league-spartan),ui-sans-serif,sans-serif]">
+              {leftBottom.title}
+            </h3>
+          </div>
+          {/* Cell: Modern building image */}
+          <div className="overflow-hidden bg-neutral-200">
+            <img
+              src={leftBottom.image}
+              alt={leftBottom.alt}
+              className="aspect-[4/3] h-full w-full object-cover"
+              style={{ objectPosition: leftBottom.objectPosition }}
+              loading="lazy"
+            />
+          </div>
+          {/* Cell: NEW CONSTRUCTION label */}
+          <div className="flex items-start bg-[#efefef] p-5 sm:p-6">
+            <h3 className="mt-auto text-sm font-bold uppercase tracking-wide text-[#3d3420] sm:text-base [font-family:var(--font-figma-league-spartan),ui-sans-serif,sans-serif]">
+              {rightBottom.title}
+            </h3>
           </div>
         </div>
       </div>

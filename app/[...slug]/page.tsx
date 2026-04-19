@@ -37,7 +37,7 @@ export default async function LandingPageBySlug({
         className="relative overflow-hidden bg-[#d8c7a8] px-6 py-14"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1600&h=600&fit=crop')",
+            "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('/figma/hero-bg.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

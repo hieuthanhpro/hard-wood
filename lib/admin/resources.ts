@@ -16,6 +16,7 @@ export type AdminField = {
   required?: boolean;
   list?: boolean;
   relationResource?: string;
+  editable?: boolean;
 };
 
 export type AdminResource = {
@@ -112,15 +113,16 @@ const resources = {
     subtitle: "Pages & Templates / Home Blocks",
     defaultOrderBy: { orderIndex: "asc" as const },
     fields: [
-      { key: "callbackKey", label: "Name / Callback", type: "text", required: true, list: true },
+      { key: "callbackKey", label: "Name / Callback", type: "text", required: true, list: true, editable: false },
       { key: "header", label: "Header", type: "text", required: true, list: true },
       { key: "subheader", label: "Subheader", type: "text" },
       { key: "content", label: "Content", type: "textarea" },
       { key: "imageUrl", label: "Image URL", type: "text" },
+      { key: "imageObjectPosition", label: "Image Position (x% y%)", type: "text" },
       { key: "ctaLabel", label: "CTA Label", type: "text" },
       { key: "ctaHref", label: "CTA Link", type: "text" },
-      { key: "orderIndex", label: "Order", type: "number", list: true },
-      { key: "visible", label: "Visible", type: "boolean", list: true },
+      { key: "orderIndex", label: "Order", type: "number", editable: false },
+      { key: "visible", label: "Visible", type: "boolean", editable: false },
     ],
   },
   "pages-structure": {

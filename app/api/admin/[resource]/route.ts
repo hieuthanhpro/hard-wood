@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminSession } from "@/lib/auth";
@@ -39,20 +40,32 @@ export async function POST(req: NextRequest, context: { params: Promise<{ resour
   }
 
   const body = (await req.json()) as Record<string, string | number | boolean | null>;
+  const homeBlockUpsert =
+    resource === "home-blocks" &&
+    typeof body.callbackKey === "string" &&
+    body.callbackKey.trim().length > 0;
   try {
-    if (body.id) {
-      const id = String(body.id);
+    if (resource === "home-blocks" && !body.id && !homeBlockUpsert) {
+      return NextResponse.json({ error: "Home blocks are fixed and cannot be created." }, { status: 400 });
+    }
+    if (body.id || homeBlockUpsert) {
+      const id = String(body.id ?? "");
       const { id: _ignored, ...rest } = body;
       const updated = await updateResource(resource as ResourceKey, id, rest);
+      revalidatePath("/", "layout");
       return NextResponse.json({ item: updated, updated: true });
     }
     const created = await createResource(resource as ResourceKey, body);
+    revalidatePath("/", "layout");
     return NextResponse.json({ item: created });
   } catch (error) {
     const err = error as { code?: string; meta?: { target?: string[] } };
     if (err?.code === "P2002") {
       const target = err.meta?.target?.join(", ") ?? "unique field";
       return NextResponse.json({ error: `Duplicate value for ${target}.` }, { status: 409 });
+    }
+    if (err?.code === "P2025") {
+      return NextResponse.json({ error: "Record not found. Try refreshing the page." }, { status: 404 });
     }
     return NextResponse.json({ error: "Create failed" }, { status: 500 });
   }

@@ -1,37 +1,62 @@
+import type { HomeBlockContent } from "@/lib/home-blocks-types";
+import { toObjectPosition } from "@/lib/home-blocks-utils";
+
 const COLUMNS = [
   {
     title: "PRODUCTS",
-    image:
-      "https://images.unsplash.com/photo-1615873968403-89e068629265?w=480&h=640&fit=crop&q=80",
+    image: "/figma/home-products.png",
     alt: "Assorted hardwood and laminate flooring planks",
     cta: "Browse our catalogue",
     href: "#",
+    objectPosition: "50% 50%",
   },
   {
     title: "SERVICES",
-    image:
-      "https://plus.unsplash.com/premium_photo-1683134399397-2407679051f7?w=480&h=640&fit=crop&q=80",
+    image: "/figma/icon-services.svg",
     alt: "Professional floor sanding and refinishing",
     cta: "Explore Services",
     href: "#",
+    objectPosition: "50% 50%",
   },
   {
     title: "GALLERY",
-    image:
-      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=480&h=640&fit=crop&q=80",
+    image: "/figma/icon-gallery.svg",
     alt: "Light wood flooring with a puppy resting",
     cta: "View our work",
     href: "#",
+    objectPosition: "50% 50%",
   },
 ] as const;
 
-export function ProductsServicesGallerySection() {
+type ColumnBlock = {
+  title: string;
+  image: string;
+  alt: string;
+  cta: string;
+  href: string;
+  objectPosition: string;
+};
+
+export function ProductsServicesGallerySection({ blocks }: { blocks?: HomeBlockContent[] }) {
+  const fallbackColumns: ColumnBlock[] = COLUMNS.map((item) => ({ ...item }));
+  const resolvedColumns =
+    blocks && blocks.length === 3
+      ? blocks.map((block, index) => ({
+          title: block?.header ?? fallbackColumns[index]?.title ?? "",
+          image: block?.imageUrl ?? fallbackColumns[index]?.image ?? "",
+          alt: block?.subheader ?? fallbackColumns[index]?.alt ?? "",
+          cta: block?.ctaLabel ?? fallbackColumns[index]?.cta ?? "",
+          href: block?.ctaHref ?? fallbackColumns[index]?.href ?? "#",
+          objectPosition: toObjectPosition(block?.imageObjectPosition),
+        }))
+      : fallbackColumns;
+
   return (
     <section className="w-full bg-white py-14 lg:py-20">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* flex + basis: reliable 3 equal columns from sm; single column on narrow phones */}
         <div className="flex w-full flex-col gap-12 sm:flex-row sm:gap-6 lg:gap-10">
-          {COLUMNS.map(({ title, image, alt, cta, href }) => (
+          {resolvedColumns.map(({ title, image, alt, cta, href, objectPosition }) => (
             <div
               key={title}
               className="flex min-w-0 flex-1 flex-col items-center text-center sm:basis-0"
@@ -46,6 +71,7 @@ export function ProductsServicesGallerySection() {
                     src={image}
                     alt={alt}
                     className="h-full w-full object-cover"
+                    style={{ objectPosition }}
                     loading="lazy"
                   />
                 </div>

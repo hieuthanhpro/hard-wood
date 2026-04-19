@@ -58,6 +58,7 @@ model HomeBlock {
   subheader   String?
   content     String?
   imageUrl    String?
+  imageObjectPosition String?
   ctaLabel    String?
   ctaHref     String?
   visible     Boolean  @default(true)

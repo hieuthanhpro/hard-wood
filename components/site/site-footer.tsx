@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Facebook, Instagram, Leaf, MessageCircle, Send, Twitter } from "lucide-react";
 
 import { FooterScrollTop } from "@/components/site/footer-scroll-top";
+import { toPlainText } from "@/lib/home-blocks-utils";
 
 const social = [
   { Icon: Facebook, label: "Facebook", href: "#" },
@@ -13,24 +14,31 @@ const social = [
 
 type FooterLink = { label: string; href: string };
 
-export function SiteFooter({ links }: { links: FooterLink[] }) {
+export function SiteFooter({
+  links,
+  aboutText,
+  copyrightText,
+}: {
+  links: FooterLink[];
+  aboutText?: string | null;
+  copyrightText?: string | null;
+}) {
+  const resolvedAboutText =
+    toPlainText(aboutText) ||
+    "Hardwoodliving is a family owned and operated business serving the Greater Vancouver area. We believe in value added service and lasting relationships with our clients.";
+  const resolvedCopyrightText = toPlainText(copyrightText) || "Copyright © 2026 Hardwoodliving";
+
   return (
-    <footer className="w-full bg-black text-white [font-family:var(--font-geist-sans),ui-sans-serif,sans-serif]">
+    <footer className="w-full bg-[#514E26] text-white [font-family:var(--font-geist-sans),ui-sans-serif,sans-serif]">
       {/* Logo */}
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 sm:pt-16 lg:px-10">
         <div className="flex flex-col items-center">
-          <Link href="/" className="group flex flex-col items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center border border-white/35 bg-white text-black transition group-hover:border-white/60">
-              <Leaf
-                className="pointer-events-none absolute size-8 text-emerald-600/95"
-                strokeWidth={1.5}
-                aria-hidden
-              />
-              <span className="relative z-10 text-xl font-bold leading-none">H</span>
-            </div>
-            <span className="font-serif text-xs font-semibold uppercase tracking-[0.28em] text-white sm:text-sm">
-              Hardwoodliving
-            </span>
+          <Link href="/" className="group flex flex-col items-center">
+            <img 
+              src="/figma/logo.svg" 
+              alt="Hardwoodliving Logo" 
+              className="h-24 w-auto transition hover:opacity-80 brightness-0 invert" 
+            />
           </Link>
         </div>
 
@@ -38,8 +46,7 @@ export function SiteFooter({ links }: { links: FooterLink[] }) {
 
         {/* About */}
         <p className="mx-auto mt-10 max-w-3xl text-center text-sm italic leading-relaxed text-white/95 sm:text-base [font-family:Georgia,Cambria,ui-serif,serif]">
-          Hardwoodliving is a family owned and operated business serving the Greater Vancouver area. We believe in
-          value added service and lasting relationships with our clients.
+          {resolvedAboutText}
         </p>
 
         <div className="mx-auto mt-10 h-px max-w-4xl bg-white/35" aria-hidden />
@@ -86,7 +93,7 @@ export function SiteFooter({ links }: { links: FooterLink[] }) {
         </div>
 
         <p className="mt-12 pb-8 text-center text-xs text-white/75 sm:text-sm">
-          Copyright © 2026 Hardwoodliving
+          {resolvedCopyrightText}
         </p>
       </div>
     </footer>

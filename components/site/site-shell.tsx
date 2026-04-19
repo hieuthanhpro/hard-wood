@@ -1,26 +1,19 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Leaf } from "lucide-react";
+import { Leaf, Facebook, Instagram, Twitter, MessageCircle, Send } from "lucide-react";
 
 import { prisma, safeDbCall } from "@/lib/db";
 import { SiteFooter } from "@/components/site/site-footer";
+import { getHomeBlocks } from "@/lib/home-blocks";
 
 function BrandLogo({ compact }: { compact?: boolean }) {
   return (
-    <Link href="/" className="group flex items-center gap-3">
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center bg-black text-white">
-        <Leaf
-          className="pointer-events-none absolute size-7 text-emerald-500/90"
-          strokeWidth={1.5}
-          aria-hidden
-        />
-        <span className="relative z-10 text-lg font-bold leading-none">H</span>
-      </div>
-      <div
-        className={`font-serif font-semibold tracking-wide text-black ${compact ? "text-sm sm:text-base" : "text-xs sm:text-sm"}`}
-      >
-        HARDWOODLIVING
-      </div>
+    <Link href="/" className="group flex items-center justify-center">
+      <img
+        src="/figma/logo.svg"
+        alt="Hardwoodliving Logo"
+        className={`w-auto transition hover:opacity-80 ${compact ? "h-14 sm:h-[72px]" : "h-[90px]"}`}
+      />
     </Link>
   );
 }
@@ -136,6 +129,9 @@ export async function SiteShell({
     list.forEach((node) => sortCategoryNodes(node.children));
   };
   sortCategoryNodes(categoryRoots);
+  const homeBlocks = await getHomeBlocks();
+  const footerAbout = homeBlocks.find((block) => block.callbackKey === "footer-about-copy");
+  const footerCopyright = homeBlocks.find((block) => block.callbackKey === "footer-copyright");
 
   const footerNav = [
     { label: "Products", href: "/products" },
@@ -148,12 +144,12 @@ export async function SiteShell({
   ];
 
   const navLinkClass = heroLayout
-    ? "text-[11px] font-bold uppercase tracking-[0.2em] text-gray-900 transition hover:text-[var(--brand-orange)] sm:text-xs"
+    ? "text-[13px] font-bold uppercase tracking-[0.15em] text-gray-900 transition hover:text-[var(--brand-orange)]"
     : "transition hover:text-orange-500";
 
   const navClassName = heroLayout
-    ? "relative z-20 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-bold uppercase tracking-wide text-gray-800 sm:gap-x-7"
-    : "relative z-20 hidden flex-wrap items-center gap-6 text-xs font-bold uppercase tracking-wide text-gray-800 lg:flex";
+    ? "relative z-20 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-bold uppercase tracking-wide text-gray-800 sm:gap-x-8"
+    : "relative z-20 hidden flex-wrap items-center gap-6 text-sm font-bold uppercase tracking-wide text-gray-800 lg:flex";
 
   const renderFlyout = (
     items: Array<NavNode | CategoryNode>,
@@ -209,38 +205,58 @@ export async function SiteShell({
       <header
         className={
           heroLayout
-            ? "absolute left-0 right-0 top-0 z-50"
-            : "w-full border-b border-gray-200"
+            ? "fixed left-0 right-0 top-0 z-50 bg-[#F9F9F9] shadow-sm"
+            : "w-full border-b border-gray-200 bg-[#F9F9F9]"
         }
       >
         {heroLayout ? (
-          <div className="mx-auto max-w-7xl px-4 pb-2 pt-5 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <BrandLogo compact />
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <a
-                  href="tel:6047265453"
-                  className="rounded-md bg-[var(--brand-orange)] px-4 py-2 text-[11px] font-bold text-white shadow-sm transition hover:brightness-95 sm:text-xs"
-                >
-                  604.726.5453
-                </a>
-                <a
-                  href="mailto:info@hardwoodliving.com"
-                  className="rounded-md bg-gray-600 px-4 py-2 text-[11px] font-bold text-white shadow-sm transition hover:bg-gray-700 sm:text-xs"
-                >
-                  info@hardwoodliving.com
-                </a>
-                <Link
-                  href="/admin"
-                  className="rounded-md border border-gray-300/80 bg-white/70 px-3 py-2 text-[11px] font-bold text-gray-700 backdrop-blur-sm transition hover:text-[var(--brand-orange)]"
-                >
-                  Admin
-                </Link>
+              <div className="flex flex-col items-end gap-3 sm:gap-4">
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <div className="flex items-center gap-1.5 mr-2">
+                    {[
+                      { Icon: Facebook, label: "Facebook" },
+                      { Icon: Instagram, label: "Instagram" },
+                      { Icon: Twitter, label: "X" },
+                      { Icon: MessageCircle, label: "WhatsApp" },
+                      { Icon: Send, label: "Telegram" },
+                    ].map(({ Icon, label }) => (
+                      <a
+                        key={label}
+                        href="#"
+                        aria-label={label}
+                        className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#333] text-white shadow-sm transition hover:bg-black"
+                      >
+                        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+                      </a>
+                    ))}
+                  </div>
+                  <a
+                    href="tel:6047265453"
+                    className="rounded-md bg-[#ff6b00] px-5 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:brightness-95"
+                  >
+                    604 726 5453
+                  </a>
+                  <a
+                    href="mailto:info@hardwoodliving.com"
+                    className="rounded-md bg-[#6b5a4a] px-5 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:brightness-95"
+                  >
+                    info@hardwoodliving.com
+                  </a>
+                  <Link
+                    href="/admin"
+                    className="rounded-md border border-gray-300/80 bg-white/70 px-3 py-2 text-[11px] font-bold text-gray-700 backdrop-blur-sm transition hover:text-[var(--brand-orange)]"
+                  >
+                    Admin
+                  </Link>
+                </div>
+                <nav className={navClassName}>
+                  {renderNavLinks()}
+                </nav>
               </div>
             </div>
-            <nav className={`${navClassName} mt-5 border-t border-gray-900/10 pt-4`}>
-              {renderNavLinks()}
-            </nav>
           </div>
         ) : (
           <>
@@ -288,7 +304,11 @@ export async function SiteShell({
 
       <main className="w-full flex-1">{children}</main>
 
-      <SiteFooter links={footerNav} />
+      <SiteFooter
+        links={footerNav}
+        aboutText={footerAbout?.content}
+        copyrightText={footerCopyright?.content}
+      />
     </div>
   );
 }
