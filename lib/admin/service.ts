@@ -84,7 +84,7 @@ function buildData(resource: ResourceKey, input: QueryRecord, mode: "create" | "
   const config = ADMIN_RESOURCES[resource];
   const data: Record<string, unknown> = {};
   for (const field of config.fields) {
-    if (mode === "update" && field.editable === false) {
+    if (mode === "update" && (field as any).editable === false) {
       continue;
     }
     const raw = input[field.key];
