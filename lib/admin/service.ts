@@ -99,7 +99,7 @@ function buildData(resource: ResourceKey, input: QueryRecord, mode: "create" | "
       continue;
     }
     const value = normalizeValue(field.type, raw);
-    if (field.relationResource) {
+    if ("relationResource" in field && field.relationResource) {
       const relationKey = relationFieldKey(field.key);
       if (value === null) {
         if (mode === "update") {
@@ -234,7 +234,7 @@ export async function getRelationOptions(resource: ResourceKey) {
   const results: Record<string, Array<{ value: string; label: string }>> = {};
 
   for (const field of config.fields) {
-    if (!field.relationResource) {
+    if (!("relationResource" in field) || !field.relationResource) {
       continue;
     }
     const relationKey = field.relationResource as ResourceKey;
