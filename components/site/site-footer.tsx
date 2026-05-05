@@ -25,7 +25,7 @@ export function SiteFooter({
 }) {
   const resolvedAboutText =
     toPlainText(aboutText) ||
-    "Hardwoodliving is a family owned and operated business serving the Greater Vancouver area. We believe in value added service and lasting relationships with our clients.";
+    "Hardwoodliving is a family owned, by appointment only flooring boutique based in the Lower Mainland, BC.\nWe specialize in providing full flooring solutions, supply, installations, sanding & finishing throughout the Lower Mainland and as far as Squamish, Whistler and Bowen Island. We carry a diverse selection of hardwoods, engineered, vinyl planks, laminates, cork and mats along with a select acrylic infused, high hardness coefficient commercial flooring. Our business model is based on the \"One client at the time\" principle thus striving to provide a catered service based on each client's unique needs. We bellieve in value added and aim for every project's success.";
   const resolvedCopyrightText = toPlainText(copyrightText) || "Copyright © 2026 Hardwoodliving";
 
   return (

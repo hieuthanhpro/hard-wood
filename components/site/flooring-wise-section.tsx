@@ -66,12 +66,7 @@ export function FlooringWiseSection({
             </div>
 
             <div className="mt-9 lg:mt-10">
-              <button
-                type="button"
-                className="rounded-[3px] bg-[#8B7E6C] px-9 py-3 text-[1.125rem] font-semibold tracking-wide text-white shadow-sm transition hover:brightness-[0.97] sm:px-10 sm:text-sm [font-family:var(--font-geist-sans),ui-sans-serif,system-ui,sans-serif]"
-              >
-                {rowOneCtaLabel}
-              </button>
+
             </div>
           </div>
 

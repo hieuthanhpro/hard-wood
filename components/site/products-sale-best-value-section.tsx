@@ -83,7 +83,7 @@ export function ProductsSaleBestValueSection({
           </article>
         </div>
 
-        <article className="relative aspect-[1402/438] w-full overflow-hidden rounded-[20px]">
+        <article className="relative min-h-[438px] w-full overflow-hidden rounded-[20px]">
           <img
             src={centerImage}
             alt={centerAlt}
@@ -91,12 +91,16 @@ export function ProductsSaleBestValueSection({
             style={{ objectPosition: centerObjectPosition }}
             loading="lazy"
           />
-          <div className="absolute left-4 right-4 top-6 rounded-[12px] bg-[#706961]/85 p-6 shadow-[0_12px_28px_rgba(0,0,0,0.35)] sm:left-10 sm:right-10 lg:left-14 lg:right-auto lg:top-[86px] lg:w-[640px] lg:p-6">
-            <p className="text-[16px] font-semibold leading-[1.4] text-white [font-family:var(--font-figma-be-vietnam),ui-sans-serif,sans-serif]">
+          <div className="absolute inset-0 bg-black/10" aria-hidden />
+          <div className="relative z-10 flex h-full flex-col justify-center px-6 py-12 sm:px-12 lg:px-24">
+<p className="max-w-2xl text-[14px] sm:text-[16px] lg:text-[16px] font-medium uppercase leading-tight text-white drop-shadow-md">
               {centerCopy}
             </p>
-            <div className="mt-4 flex">
-              <a href={centerCtaHref} className={`${ctaBtn} w-auto px-6`}>
+            <div className="mt-8 flex">
+              <a
+                href={centerCtaHref}
+                className="rounded-md bg-[#FF751F] px-10 py-3.5 text-[17px] font-bold text-white shadow-lg transition hover:brightness-95 [font-family:var(--font-figma-be-vietnam),ui-sans-serif,sans-serif]"
+              >
                 {centerCta}
               </a>
             </div>

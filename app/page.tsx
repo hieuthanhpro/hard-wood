@@ -28,7 +28,7 @@ export default async function Home() {
   const heroBlock = blockMap["[1. Hero] Main Block"];
   const heroImage = heroBlock?.imageUrl ?? "";
   const heroObjectPosition = toObjectPosition(heroBlock?.imageObjectPosition);
-  const heroCtaLabel = heroBlock?.ctaLabel ?? "Inquire here";
+  const heroCtaLabel = heroBlock?.ctaLabel ?? "Book a showroom visit";
   const heroCtaHref = heroBlock?.ctaHref ?? "#";
   const heroFaqBlock = blockMap["hero-faq"];
   const heroSecondaryCtaBlock = blockMap["[1. Hero] Secondary CTA Button"];
